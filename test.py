@@ -1,11 +1,16 @@
 import unittest
 import subprocess 
+import os
 
 class DatabaseTest(unittest.TestCase):
+    def setUp(self):
+        if os.path.exists("test.db"):
+            os.remove("test.db");
+
     def run_script(self, commands):
         input_str = '\n'.join(commands) + '\n'
         process = subprocess.Popen(
-                "./db", 
+                ["./db", "test.db"], 
                 stdin=subprocess.PIPE, 
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
@@ -79,6 +84,27 @@ class DatabaseTest(unittest.TestCase):
             "db > Executed.",
             "db > ",
         ])
+
+    def test_keeps_data_after_closing_connection(self):
+        result1 = self.run_script([
+            "insert 1 nurda nurda@nurda.com",
+            ".exit"
+        ])
+        self.assertEqual(result1, [
+            "db > Executed.",
+            "db > "
+        ])
+
+        result2 = self.run_script([
+            "select",
+            ".exit"
+        ])
+        self.assertEqual(result2, [
+            "db > (1, nurda, nurda@nurda.com)",
+            "Executed.",
+            "db > "
+        ])
+
 
 if __name__ == "__main__":
     unittest.main()
